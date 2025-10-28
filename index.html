@@ -325,6 +325,11 @@
             updateCellDOM(currentCellIndex, name);
             hideInputModal();
             checkBingo(true);
+
+            // Improvement 2: Haptic Feedback for marking
+            if (navigator.vibrate) { 
+                navigator.vibrate(100); // 100ms vibration for marking
+            }
         }
 
         function unmarkCell() {
@@ -334,6 +339,11 @@
             updateCellDOM(currentCellIndex, null);
             hideInputModal();
             checkBingo(false);
+
+            // Improvement 2: Haptic Feedback for unmarking
+            if (navigator.vibrate) { 
+                navigator.vibrate(50); // 50ms vibration for unmarking/removing
+            }
         }
 
         // Check all rows, columns, and diagonals for a BINGO
@@ -412,6 +422,14 @@
             document.getElementById('unmark-button').addEventListener('click', unmarkCell);
             document.getElementById('cancel-button').addEventListener('click', hideInputModal);
 
+            // Improvement 3: Listen for Enter keypress in the name input field
+            document.getElementById('person-name-input').addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default browser behavior
+                    markCellWithName();
+                }
+            });
+
 
             initializeBoard();
         };
@@ -451,7 +469,8 @@
 
     <!-- Main Game Card -->
     <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl max-w-lg w-full">
-        <h1 class="text-4xl font-bold text-center mb-6 text-blue-700">Networking BINGO</h1>
+        <!-- Improvement 1: Smaller text-3xl for mobile, increasing to text-4xl on medium screens -->
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-blue-700">Networking BINGO</h1>
         <p class="text-center mb-6 text-sm text-gray-500">Click a square to enter the person's name who matches the prompt.</p>
         
         <!-- BINGO Grid -->
