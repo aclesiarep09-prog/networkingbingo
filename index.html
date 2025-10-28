@@ -2,489 +2,916 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Networking BINGO with Celebration</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Networking BINGO</title>
     <style>
-        /* Custom CSS for the BINGO celebration */
-        @keyframes scrollAndFlash {
-            0% { transform: translateX(100%); opacity: 0; text-shadow: 0 0 5px #f00; }
-            5% { opacity: 1; }
-            50% { transform: translateX(-100%); opacity: 1; text-shadow: 0 0 50px #ff0, 0 0 10px #f00; }
-            100% { transform: translateX(-100%); opacity: 0; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        #bingo-overlay {
-            z-index: 50; /* Above the grid */
-            pointer-events: none;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
-        .bingo-celebration {
-            font-family: 'Inter', sans-serif;
-            animation: scrollAndFlash 4s ease-in-out infinite;
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
         }
-        
-        /* Main Grid and Cell Styles */
-        .bingo-grid {
+
+        .header h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .bingo-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            touch-action: manipulation;
+        }
+
+        .bingo-board {
+            display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 0.5rem;
+            gap: 8px;
+            margin-bottom: 20px;
         }
 
         .bingo-cell {
-            font-family: 'Inter', sans-serif;
-            width: 100%;
-            padding-top: 100%; /* Makes the cells perfectly square */
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            aspect-ratio: 1;
+            border: 3px solid #10b981;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
-            border: 2px solid #3b82f6; /* Blue border */
-            background-color: #eff6ff; /* Blue light background */
             text-align: center;
-            
-            font-size: 0.65rem; /* Decreased font size for better mobile fit */ 
+            padding: 8px;
+            font-size: 0.75em;
             line-height: 1.2;
-            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
         }
 
-        .bingo-cell:hover:not(.marked) {
-            background-color: #dbeafe;
+        .bingo-cell span {
+            display: block;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-height: 1.2;
         }
 
-        .marked {
-            background-color: #10b981; /* Green */
-            color: white;
+        .bingo-cell:active {
+            transform: scale(0.95);
+        }
+
+        .bingo-cell:hover {
             transform: scale(1.05);
-            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .bingo-cell.marked {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
             border-color: #059669;
         }
-        
-        .marked .cell-prompt {
-            color: #d1fae5; /* Light green for prompt text */
-            font-size: 0.65rem; 
-            margin-top: 0.25rem;
-        }
-        
-        .marked .cell-name {
-            font-weight: 700;
+
+        .bingo-cell.free-space {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-            font-size: 1rem;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: default;
         }
 
+        .bingo-cell.free-space:hover {
+            transform: none;
+        }
 
-        .cell-content {
+        .person-name {
             position: absolute;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+            font-size: 0.7em;
+            font-weight: bold;
+            background: rgba(255,255,255,0.9);
+            color: #059669;
+            padding: 2px 5px;
+            border-radius: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bingo-cell.marked .person-name {
+            background: rgba(255,255,255,0.95);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background: rgba(0,0,0,0.7);
             justify-content: center;
-            padding: 6px; 
+            align-items: center;
+            z-index: 1000;
         }
 
-        /* Styling for the FREE space */
-        .free-space {
-            background-color: #fcd34d; /* Amber */
-            color: #1f2937; /* Dark text */
-            cursor: default;
-            transform: scale(1.05);
-            border-color: #d97706;
+        .modal.active {
+            display: flex;
         }
-        
-        /* --- MODAL STYLES --- */
-        #input-modal {
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            color: #10b981;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+
+        .modal-buttons button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-clear {
+            background: #f5576c;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .controls button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+
+        .controls button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .celebration {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7); 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 60;
-            transition: opacity 0.3s ease;
-        }
-        #input-modal.hidden { display: none; }
-        
-        #input-modal-content {
-            background-color: white;
-            padding: 2rem; 
-            border-radius: 0.75rem; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
-            max-width: 400px; 
-            width: 90%; 
-            text-align: center;
-        }
-        
-        .name-input-field {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 1rem;
-            border: 2px solid #3b82f6;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            text-align: center;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            justify-content: space-around;
-            gap: 0.5rem;
-            margin-top: 1rem;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
         }
 
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .bingo-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            z-index: 10000;
+            animation: bingo-popup 0.5s ease-out forwards;
+        }
+
+        @keyframes bingo-popup {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(10deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .bingo-container {
+                padding: 12px;
+            }
+
+            .bingo-board {
+                gap: 5px;
+            }
+            
+            .bingo-cell {
+                font-size: 0.55em;
+                padding: 4px;
+                border-width: 2px;
+                line-height: 1.1;
+            }
+
+            .bingo-cell span {
+                -webkit-line-clamp: 4;
+            }
+
+            .person-name {
+                font-size: 0.5em;
+                padding: 1px 2px;
+                bottom: 2px;
+                left: 2px;
+                right: 2px;
+            }
+
+            .bingo-message {
+                font-size: 2em;
+                padding: 30px 40px;
+            }
+
+            .modal-content {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            .modal-content h2 {
+                font-size: 1.3em;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .modal-buttons button {
+                width: 100%;
+            }
+
+            .controls button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .bingo-cell {
+                font-size: 0.5em;
+                padding: 3px;
+            }
+
+            .bingo-cell span {
+                -webkit-line-clamp: 3;
+            }
+        }
     </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Networking BINGO</h1>
+        <p>Meet people and mark your card!</p>
+    </div>
+
+    <div class="bingo-container">
+        <div class="bingo-board" id="bingoBoard"></div>
+        <div class="controls">
+            <button class="btn-refresh" onclick="generateNewCard()">🔄 New Card</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Enter Name</h2>
+            <p id="modalPrompt"></p>
+            <input type="text" id="nameInput" placeholder="Enter person's name..." />
+            <div class="modal-buttons">
+                <button class="btn-save" onclick="saveName()">Save</button>
+                <button class="btn-clear" onclick="clearName()">Clear</button>
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Global state
-        const GRID_SIZE = 5;
-        let boardState = []; // 1D array of objects: { prompt, name, element }
-        let isCelebrating = false;
-        let currentCellIndex = null;
-        
-        const BINGO_PROMPTS = [
+        const prompts = [
             "Has traveled to 3+ continents",
-            "Works in a completely different industry",
+            "Works in completely different industry",
             "Is actively mentoring someone",
             "Prefers working from home",
-            "Has a pet that isn't a cat or dog",
+            "Has pet that isn't cat or dog",
             "Knows how to code (any language)",
             "Can recommend a great podcast",
-            "Has started a small business/side hustle",
-            "Is currently learning a new language",
-            "Has lived in more than one state/country",
-            "Is a self-proclaimed 'morning person'",
-            "Has met a well-known celebrity/figure",
-            "FREE SPACE", // UPDATED: Removed the descriptive text
+            "Started a small business or side hustle",
+            "Is currently learning new language",
+            "Has lived in more than one state",
+            "Is self-proclaimed morning person",
+            "Has met a well-known celebrity",
             "Is younger than 25 or older than 50",
             "Is a night owl (awake past midnight)",
-            "Has a certification/degree in an unexpected field",
+            "Has certification in unexpected field",
             "Can play a musical instrument",
             "Has read a book this month",
-            "Volunteers for a non-profit organization",
-            "Has a favorite productivity hack to share",
-            "Has worked at the ISO for less than a year", 
-            "Has worked at the ISO for 10+ years", 
-            "Grew up in the city they currently live in",
-            "Has successfully negotiated a major deal",
-            "Has a unique hobby (e.g., pottery, lock-picking)"
+            "Volunteers for non-profit",
+            "Has favorite productivity hack",
+            "Worked at CAISO less than 1 year",
+            "Worked at CAISO 10+ years",
+            "Grew up in city they live in now",
+            "Successfully negotiated major deal",
+            "Has unique hobby",
+            "Worked at CAISO 5-10 years",
+            "Worked at CAISO 2-5 years",
+            "Started in different department",
+            "Worked in 3+ departments at CAISO",
+            "Been here since founding (1998)",
+            "Worked at CAISO 15+ years",
+            "Has traveled to 5+ countries",
+            "Has been to Europe",
+            "Has been to Asia",
+            "Has been to Africa",
+            "Has been to South America",
+            "Has been to Australia",
+            "Visited 10+ countries",
+            "Has been to Hawaii",
+            "Has been to Alaska",
+            "Speaks 2+ languages",
+            "Speaks 3+ languages",
+            "Has lived abroad",
+            "Visited 30+ US states",
+            "Has traveled for work internationally",
+            "Attended industry conference",
+            "Volunteers in local community",
+            "Organized a team event",
+            "Presented at professional meeting",
+            "Part of professional group",
+            "Attended networking event recently",
+            "Has published an article or paper",
+            "Holds a professional certification",
+            "Completed technical bootcamp",
+            "Is learning new skill currently",
+            "Taught a class or workshop",
+            "Speaks at conferences",
+            "Writes a blog",
+            "Active on professional social media",
+            "Has a side project",
+            "Freelances in spare time",
+            "Consults on the side",
+            "Has multiple career paths",
+            "Changed careers completely",
+            "Self-taught in current field",
+            "Has technical patent",
+            "Won professional award",
+            "Leads volunteer project",
+            "Sits on advisory board",
+            "Plays musical instrument",
+            "Is in a band or musical group",
+            "Enjoys painting or drawing",
+            "Practices yoga regularly",
+            "Runs marathons or half marathons",
+            "Plays on sports team",
+            "Enjoys hiking on weekends",
+            "Rock climbing enthusiast",
+            "Loves to cook new recipes",
+            "Is self-proclaimed foodie",
+            "Home brews beer or wine",
+            "Has vegetable garden",
+            "Raises backyard chickens",
+            "Owns unusual pet",
+            "Has 3+ pets",
+            "Rescued animal from shelter",
+            "Fosters animals",
+            "Trains dogs as hobby",
+            "Knows magic tricks",
+            "Can juggle",
+            "Does stand-up comedy",
+            "Practices martial arts",
+            "Collects something unusual",
+            "Builds models or miniatures",
+            "Does woodworking",
+            "Makes jewelry",
+            "Does pottery or ceramics",
+            "Practices calligraphy",
+            "Does origami",
+            "Restores old furniture",
+            "Enjoys DIY home projects",
+            "Landscaped own yard",
+            "Painted a room recently",
+            "Plant parent (10+ houseplants)",
+            "Grows herbs indoors",
+            "Has bonsai trees",
+            "Went to same school as you",
+            "Shares your hobby",
+            "Has same coffee order as you",
+            "Loves same cuisine as you",
+            "Roots for same team as you",
+            "Reads same book genre as you",
+            "Listens to same music as you",
+            "Watches same TV shows as you",
+            "Has been skydiving",
+            "Has been bungee jumping",
+            "Learned to surf",
+            "Has been scuba diving",
+            "Climbed a mountain",
+            "Been whitewater rafting",
+            "Gone zip-lining",
+            "Rode in hot air balloon",
+            "Been on safari",
+            "Swam with dolphins",
+            "Saw Northern Lights",
+            "Visited active volcano",
+            "Been to Disney 5+ times",
+            "Hiked the Grand Canyon",
+            "Visited Yosemite",
+            "Been to Lake Tahoe",
+            "Explored Big Sur",
+            "Visited wine country",
+            "Visited 5+ national parks",
+            "Has season pass to theme park",
+            "Loves roller coasters",
+            "Enjoys water parks",
+            "Fan of Star Wars",
+            "Fan of Star Trek",
+            "Loves Marvel movies",
+            "Enjoys fantasy novels",
+            "Reads science fiction",
+            "Binges TV series",
+            "Listens to podcasts daily",
+            "Audiobook enthusiast",
+            "Book club member",
+            "Has read 20+ books this year",
+            "Reads non-fiction primarily",
+            "Loves mystery novels",
+            "True crime podcast fan",
+            "History enthusiast",
+            "Science lover",
+            "Math puzzle solver",
+            "Does crosswords daily",
+            "Sudoku fan",
+            "Chess player",
+            "Card game enthusiast",
+            "Poker player",
+            "Board game collector",
+            "Hosts game nights",
+            "Escape room veteran",
+            "Trivia team member",
+            "Knows random facts",
+            "Remembers obscure details",
+            "Is vegetarian or vegan",
+            "Follows gluten-free diet",
+            "Loves spicy food",
+            "Coffee enthusiast",
+            "Tea drinker (no coffee)",
+            "Doesn't drink caffeine",
+            "Brings lunch to work daily",
+            "Meal preps for the week",
+            "Enjoys cooking shows",
+            "Bakes for fun",
+            "Makes bread from scratch",
+            "Grills regularly",
+            "Knows 5+ cheese varieties",
+            "Wine tasting enthusiast",
+            "Craft beer fan",
+            "Makes specialty cocktails",
+            "Juices or makes smoothies",
+            "Grows own food",
+            "Shops at farmers markets",
+            "Tries new restaurants monthly",
+            "Has favorite food truck",
+            "Knows best local coffee spot",
+            "Walks during lunch break",
+            "Bikes to work",
+            "Takes public transit",
+            "Has long commute (45+ min)",
+            "Lives within 5 miles of work",
+            "Works hybrid schedule",
+            "Prefers office collaboration",
+            "Has standing desk",
+            "Uses multiple monitors",
+            "Has ergonomic setup",
+            "Color-codes their calendar",
+            "Uses keyboard shortcuts",
+            "Early bird (arrives before 8am)",
+            "Works best after lunch",
+            "Stays late to finish projects",
+            "Attended company holiday party",
+            "Participated in giving campaign",
+            "On company sports team",
+            "Attended company picnic",
+            "Part of workplace book club",
+            "Uses wellness program",
+            "Carpool participant",
+            "Attended workplace happy hour",
+            "Referred someone to CAISO",
+            "Has friend working at CAISO",
+            "Family member works in energy",
+            "Passionate about renewable energy",
+            "Owns electric vehicle",
+            "Has solar panels at home",
+            "Composts at home",
+            "Recycles everything possible",
+            "Uses reusable bags and bottles",
+            "Bikes for errands",
+            "Conserves water actively",
+            "Monitors energy usage",
+            "Theater enthusiast",
+            "Concert regular",
+            "Music festival goer",
+            "Comedy show attendee",
+            "Opera or ballet fan",
+            "Museum visitor",
+            "Art gallery browser",
+            "Craft fair enthusiast",
+            "Loves karaoke",
+            "Enjoys dancing",
+            "Golfer",
+            "Tennis player",
+            "Bowler",
+            "Swimmer",
+            "Cyclist",
+            "Runner",
+            "Gym regular",
+            "CrossFit participant",
+            "Pilates practitioner",
+            "Does daily meditation",
+            "Journals regularly",
+            "Practices gratitude daily",
+            "Sets annual goals",
+            "Tracks habits",
+            "Vision board creator",
+            "Has run a 5K",
+            "Completed half marathon",
+            "Finished a triathlon",
+            "Has broken a bone",
+            "Loves the beach",
+            "Mountain person",
+            "Desert explorer",
+            "Lake enthusiast",
+            "Enjoys camping",
+            "Prefers warm weather",
+            "Loves rainy days",
+            "Snow sports enthusiast",
+            "Photography hobbyist",
+            "Makes videos",
+            "Edits photos for fun",
+            "Has graphic design skills",
+            "Codes for fun",
+            "Built own website",
+            "Tech early adopter",
+            "Can fix computers",
+            "Troubleshoots tech for friends",
+            "Built own PC",
+            "Sews, knits, or crochets",
+            "Loves astronomy",
+            "Stargazes regularly",
+            "Owns telescope",
+            "Watched meteor shower",
+            "Seen solar eclipse",
+            "Went to Burning Man",
+            "Attended Coachella",
+            "Been to Comic-Con",
+            "Attended SXSW",
+            "Been to TED talk",
+            "Visited 50+ cities",
+            "Backpacked through country",
+            "Taken solo trip abroad",
+            "Road tripped across US",
+            "Cruised internationally",
+            "Stayed in hostel",
+            "Went on group tour",
+            "Traveled on budget airline",
+            "Has travel bucket list",
+            "Plans trips months ahead",
+            "Books trips last minute",
+            "Prefers all-inclusive resorts",
+            "Loves boutique hotels",
+            "Camps while traveling",
+            "Airbnb enthusiast"
         ];
 
+        let currentCard = [];
+        let markedCells = {};
+        let currentCellIndex = null;
 
-        // Utility to shuffle an array (Fisher-Yates)
         function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-            return array;
+            return shuffled;
         }
 
-        // Generates the initial randomized board data
-        function generateNewBoardData() {
-            let gamePrompts = [...BINGO_PROMPTS];
-            // Find and remove the FREE SPACE prompt, which is now just "FREE SPACE"
-            const freeSpaceIndexInPrompts = gamePrompts.findIndex(p => p.startsWith("FREE SPACE"));
-            const freeSpacePrompt = gamePrompts.splice(freeSpaceIndexInPrompts, 1)[0];
-            
-            shuffleArray(gamePrompts);
-            gamePrompts.splice(12, 0, freeSpacePrompt); // Insert free space back at index 12 (center)
-
-            const newBoard = gamePrompts.map((prompt, index) => ({
-                prompt: prompt,
-                name: index === 12 ? "FREE SPACE" : null, // Mark free space by default
-                element: null,
-                index: index
-            }));
-            
-            return newBoard;
+        function generateCard() {
+            const shuffled = shuffleArray(prompts);
+            const card = shuffled.slice(0, 24);
+            card.splice(12, 0, "FREE SPACE");
+            return card;
         }
 
-        // Initializes the BINGO board UI and state
-        function initializeBoard() {
-            const gridContainer = document.getElementById('bingo-grid');
-            gridContainer.innerHTML = '';
-            isCelebrating = false;
-            document.getElementById('bingo-overlay').classList.add('hidden');
-            document.getElementById('reset-button').disabled = true;
-
-            boardState = generateNewBoardData();
+        function renderCard() {
+            const board = document.getElementById('bingoBoard');
+            board.innerHTML = '';
             
-            boardState.forEach(cellData => {
-                const index = cellData.index;
-                const isFree = index === 12;
-                const isMarked = !!cellData.name;
-
+            currentCard.forEach((prompt, index) => {
                 const cell = document.createElement('div');
-                cell.className = `bingo-cell rounded-lg shadow-md ${isFree ? 'free-space' : ''}`;
-                cell.setAttribute('data-index', index);
+                cell.className = 'bingo-cell';
                 
-                if (isMarked) {
-                    cell.classList.add('marked');
+                if (index === 12) {
+                    cell.className += ' free-space';
+                    cell.textContent = prompt;
+                } else {
+                    cell.innerHTML = '<span>' + prompt + '</span>';
+                    cell.onclick = () => openModal(index);
+                    
+                    if (markedCells[index]) {
+                        cell.classList.add('marked');
+                        const nameTag = document.createElement('div');
+                        nameTag.className = 'person-name';
+                        nameTag.textContent = markedCells[index];
+                        cell.appendChild(nameTag);
+                    }
                 }
-
-                cell.onclick = () => handleCellClick(index);
-
-                cellData.element = cell;
-                gridContainer.appendChild(cell);
                 
-                // Render initial content
-                updateCellDOM(index, cellData.name);
+                board.appendChild(cell);
             });
-            
-            document.getElementById('reset-button').disabled = false;
-        }
-        
-        /**
-         * Renders content based on state for a single cell.
-         * @param {number} index - The index of the cell.
-         * @param {string | null} name - The name of the person, or null if unmarked.
-         */
-        function updateCellDOM(index, name) {
-            const cellData = boardState[index];
-            const cellElement = cellData.element;
-            const isFree = index === 12;
-            
-            if (!cellElement) return;
-
-            if (name && name !== 'FREE SPACE') {
-                // Marked state (Confirmed)
-                cellElement.classList.add('marked');
-                cellElement.innerHTML = `
-                    <div class="cell-content">
-                        <span class="cell-name">${name}</span>
-                        <span class="cell-prompt text-xs italic">(${cellData.prompt})</span>
-                    </div>
-                `;
-            } else if (isFree) {
-                // Free Space (Updated: Only shows 'FREE' text, perfectly centered)
-                cellElement.innerHTML = `
-                    <div class="cell-content">
-                        <span class="font-extrabold text-4xl leading-none">FREE</span>
-                    </div>
-                `;
-            } else {
-                // Unmarked state
-                cellElement.classList.remove('marked');
-                cellElement.innerHTML = `<div class="cell-content">${cellData.prompt}</div>`;
-            }
         }
 
-
-        // Handles cell click event
-        function handleCellClick(index) {
-            if (index === 12) return; // Ignore free space clicks
+        function openModal(index) {
             currentCellIndex = index;
-
-            const cellData = boardState[index];
-            const isMarked = !!cellData.name;
+            const modal = document.getElementById('modal');
+            const modalPrompt = document.getElementById('modalPrompt');
+            const nameInput = document.getElementById('nameInput');
             
-            document.getElementById('input-prompt-text').textContent = `Prompt: ${cellData.prompt}`;
+            modalPrompt.textContent = currentCard[index];
+            nameInput.value = markedCells[index] || '';
             
-            const nameInput = document.getElementById('person-name-input');
-            nameInput.value = isMarked ? cellData.name : '';
-
-            // Set up modal buttons and title based on state
-            document.getElementById('input-modal-title').textContent = isMarked ? "Edit Confirmed Name" : "Who confirmed this space?";
-            document.getElementById('mark-button').textContent = isMarked ? "Update Name" : "Mark Space";
-            document.getElementById('unmark-button').classList.toggle('hidden', !isMarked);
+            modal.classList.add('active');
             
-            showInputModal();
-            nameInput.focus();
-        }
-        
-        function showInputModal() {
-            document.getElementById('input-modal').classList.remove('hidden');
+            setTimeout(() => {
+                nameInput.focus();
+            }, 100);
         }
 
-        function hideInputModal() {
-            document.getElementById('input-modal').classList.add('hidden');
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
             currentCellIndex = null;
         }
-        
-        function markCellWithName() {
-            if (currentCellIndex === null) return;
-            
-            const nameInput = document.getElementById('person-name-input');
+
+        function saveName() {
+            const nameInput = document.getElementById('nameInput');
             const name = nameInput.value.trim();
             
-            if (name === "") {
-                nameInput.style.border = '2px solid #ef4444'; 
-                return;
+            if (name && currentCellIndex !== null) {
+                markedCells[currentCellIndex] = name;
+                renderCard();
+                checkForBingo();
             }
-            nameInput.style.border = '2px solid #3b82f6'; // Reset border
-
-            boardState[currentCellIndex].name = name;
-            updateCellDOM(currentCellIndex, name);
-            hideInputModal();
-            checkBingo(true);
-
-            // Improvement 2: Haptic Feedback for marking
-            if (navigator.vibrate) { 
-                navigator.vibrate(100); // 100ms vibration for marking
-            }
-        }
-
-        function unmarkCell() {
-            if (currentCellIndex === null || currentCellIndex === 12) return;
-
-            boardState[currentCellIndex].name = null;
-            updateCellDOM(currentCellIndex, null);
-            hideInputModal();
-            checkBingo(false);
-
-            // Improvement 2: Haptic Feedback for unmarking
-            if (navigator.vibrate) { 
-                navigator.vibrate(50); // 50ms vibration for unmarking/removing
-            }
-        }
-
-        // Check all rows, columns, and diagonals for a BINGO
-        function checkBingo(showModal) {
-            const N = GRID_SIZE;
-            let bingoFound = false;
-
-            // Check Rows, Columns, and Diagonals
-            const isMarked = (r, c) => !!boardState[r * N + c].name;
             
-            // 1. Check Rows and Columns
-            for (let i = 0; i < N; i++) {
-                let rowBingo = true;
-                let colBingo = true;
-                for (let j = 0; j < N; j++) {
-                    if (!isMarked(i, j)) rowBingo = false;
-                    if (!isMarked(j, i)) colBingo = false;
-                }
-                if (rowBingo || colBingo) bingoFound = true;
-            }
-
-            // 2. Check Diagonals
-            let diag1Bingo = true; // Top-left to bottom-right (i, i)
-            let diag2Bingo = true; // Top-right to bottom-left (i, N-1-i)
-            for (let i = 0; i < N; i++) {
-                if (!isMarked(i, i)) diag1Bingo = false;
-                if (!isMarked(i, N - 1 - i)) diag2Bingo = false;
-            }
-
-            if (diag1Bingo || diag2Bingo) bingoFound = true;
-            
-            if (bingoFound && showModal) {
-                startCelebration();
-            }
-            return bingoFound;
+            closeModal();
         }
 
-        // Start the visual celebration
-        function startCelebration() {
-            if (isCelebrating) return;
-            isCelebrating = true;
+        function clearName() {
+            if (currentCellIndex !== null) {
+                delete markedCells[currentCellIndex];
+                renderCard();
+            }
+            closeModal();
+        }
 
-            const overlay = document.getElementById('bingo-overlay');
-            overlay.classList.remove('hidden');
+        function generateNewCard() {
+            markedCells = {};
+            currentCard = generateCard();
+            renderCard();
+        }
 
-            // Play a celebratory sound effect using Tone.js
-            try {
-                // Ensure Tone is initialized
-                if (Tone.context.state !== 'running') {
-                    Tone.context.resume();
+        function checkForBingo() {
+            const bingoPatterns = [
+                [0, 1, 2, 3, 4],
+                [5, 6, 7, 8, 9],
+                [10, 11, 12, 13, 14],
+                [15, 16, 17, 18, 19],
+                [20, 21, 22, 23, 24],
+                [0, 5, 10, 15, 20],
+                [1, 6, 11, 16, 21],
+                [2, 7, 12, 17, 22],
+                [3, 8, 13, 18, 23],
+                [4, 9, 14, 19, 24],
+                [0, 6, 12, 18, 24],
+                [4, 8, 12, 16, 20]
+            ];
+
+            for (let pattern of bingoPatterns) {
+                let isBingo = true;
+                for (let index of pattern) {
+                    if (index === 12) continue;
+                    if (!markedCells[index]) {
+                        isBingo = false;
+                        break;
+                    }
                 }
-                const synth = new Tone.MembraneSynth().toDestination();
-                synth.triggerAttackRelease('C4', '8n');
-                setTimeout(() => synth.triggerAttackRelease('E4', '8n'), 150);
-                setTimeout(() => synth.triggerAttackRelease('G4', '4n'), 300);
-            } catch (e) {
-                console.warn("Tone.js sound failed. Is the library loaded?", e);
+                if (isBingo) {
+                    celebrateBingo();
+                    return;
+                }
+            }
+        }
+
+        function celebrateBingo() {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            document.body.appendChild(celebration);
+
+            const message = document.createElement('div');
+            message.className = 'bingo-message';
+            message.innerHTML = '🎉 BINGO! 🎉';
+            document.body.appendChild(message);
+
+            const colors = ['#10b981', '#059669', '#34d399', '#6ee7b7', '#a7f3d0', '#fbbf24', '#f59e0b', '#f97316'];
+            for (let i = 0; i < 150; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = '0s';
+                    confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+                    confetti.style.width = (5 + Math.random() * 10) + 'px';
+                    confetti.style.height = (5 + Math.random() * 10) + 'px';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    celebration.appendChild(confetti);
+                }, i * 10);
             }
 
-            // The animation runs infinitely, but we only let the overlay show for a duration
             setTimeout(() => {
-                isCelebrating = false;
-                overlay.classList.add('hidden');
-            }, 8000); // Celebration runs for 8 seconds
+                celebration.remove();
+                message.remove();
+            }, 5000);
         }
 
-        // Setup on window load
-        window.onload = function() {
-            // Load Tone.js for sound effects
-            const toneScript = document.createElement('script');
-            toneScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js';
-            document.head.appendChild(toneScript);
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                closeModal();
+            }
+        });
 
-            document.getElementById('reset-button').addEventListener('click', initializeBoard);
-            document.getElementById('mark-button').addEventListener('click', markCellWithName);
-            document.getElementById('unmark-button').addEventListener('click', unmarkCell);
-            document.getElementById('cancel-button').addEventListener('click', hideInputModal);
+        document.getElementById('nameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveName();
+            }
+        });
 
-            // Improvement 3: Listen for Enter keypress in the name input field
-            document.getElementById('person-name-input').addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault(); // Prevent default browser behavior
-                    markCellWithName();
-                }
-            });
-
-
-            initializeBoard();
-        };
-
+        generateNewCard();
     </script>
-</head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
-
-    <!-- Celebration Overlay (Hidden by default) -->
-    <div id="bingo-overlay" class="hidden fixed inset-0 overflow-hidden">
-        <div class="absolute inset-0 bg-black opacity-50"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-9xl font-extrabold whitespace-nowrap text-red-500 bingo-celebration">
-            BINGO!!! BINGO!!! BINGO!!!
-        </div>
-    </div>
-    
-    <!-- Input Modal -->
-    <div id="input-modal" class="hidden">
-        <div id="input-modal-content" class="rounded-xl">
-            <h2 id="input-modal-title" class="text-xl font-bold mb-4 text-blue-700">Who confirmed this space?</h2>
-            <p id="input-prompt-text" class="text-sm font-normal text-gray-600 mb-4"></p>
-            <input type="text" id="person-name-input" placeholder="Enter name here" class="name-input-field">
-            <div class="modal-buttons">
-                <button id="mark-button" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 transform hover:scale-105">
-                    Mark Space
-                </button>
-                <button id="cancel-button" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-150 transform hover:scale-105">
-                    Cancel
-                </button>
-            </div>
-             <button id="unmark-button" class="hidden w-full mt-4 px-4 py-2 bg-red-400 text-red-900 font-semibold rounded-lg shadow-md hover:bg-red-500 transition duration-150 transform hover:scale-105 text-sm">
-                Remove Mark
-            </button>
-        </div>
-    </div>
-
-
-    <!-- Main Game Card -->
-    <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl max-w-lg w-full">
-        <!-- Improvement 1: Smaller text-3xl for mobile, increasing to text-4xl on medium screens -->
-        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-blue-700">Networking BINGO</h1>
-        <p class="text-center mb-6 text-sm text-gray-500">Click a square to enter the person's name who matches the prompt.</p>
-        
-        <!-- BINGO Grid -->
-        <div id="bingo-grid" class="grid bingo-grid aspect-square">
-            <!-- Cells generated by JavaScript -->
-        </div>
-
-        <!-- Controls -->
-        <div class="mt-8 flex justify-center">
-            <button id="reset-button" class="px-6 py-3 bg-red-500 text-white font-semibold rounded-full shadow-lg hover:bg-red-600 transition duration-150 transform hover:scale-105" disabled>
-                Reset Board
-            </button>
-        </div>
-    </div>
-
 </body>
 </html>
