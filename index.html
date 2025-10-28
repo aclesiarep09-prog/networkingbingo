@@ -3,87 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Networking Bingo - Standalone</title>
-    
-    <!-- ************************************ -->
-    <!-- All necessary styles are embedded here, NO internet connection required! -->
-    <!-- ************************************ -->
+    <title>Networking BINGO with Celebration</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Define custom colors and font */
-        :root {
-            --primary-blue: #1e3a8a;
-            --accent-teal: #14b8a6;
-            --marked-green: #059669;
+        /* Custom CSS for the BINGO celebration */
+        @keyframes scrollAndFlash {
+            0% { transform: translateX(100%); opacity: 0; text-shadow: 0 0 5px #f00; }
+            5% { opacity: 1; }
+            50% { transform: translateX(-100%); opacity: 1; text-shadow: 0 0 50px #ff0, 0 0 10px #f00; }
+            100% { transform: translateX(-100%); opacity: 0; }
         }
 
-        body {
-            background-color: #f9fafb; /* bg-gray-50 */
-            min-height: 100vh;
+        #bingo-overlay {
+            z-index: 50; /* Above the grid */
+            pointer-events: none;
+        }
+
+        .bingo-celebration {
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        #app {
-            max-width: 960px; /* max-w-4xl */
-            margin-left: auto;
-            margin-right: auto;
-            padding: 16px; /* p-4 */
+            animation: scrollAndFlash 4s ease-in-out infinite;
         }
         
-        @media (min-width: 640px) { /* sm:p-6 */
-            #app { padding: 24px; }
-        }
-        @media (min-width: 1024px) { /* lg:p-8 */
-            #app { padding: 32px; }
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 32px; /* mb-8 */
-        }
-
-        header h1 {
-            font-size: 3rem; /* text-5xl */
-            font-weight: 800; /* font-extrabold */
-            color: var(--primary-blue);
-            margin-bottom: 8px; /* mb-2 */
-        }
-
-        header p {
-            font-size: 1.25rem; /* text-xl */
-            color: var(--accent-teal);
-        }
-
-        /* BINGO GRID AND CELL STYLES */
-        #bingo-board {
-            display: grid;
+        /* Main Grid and Cell Styles */
+        .bingo-grid {
             grid-template-columns: repeat(5, 1fr);
-            grid-gap: 8px;
-            max-width: 672px; /* max-w-2xl */
-            margin-left: auto;
-            margin-right: auto;
-            padding: 16px;
-            background-color: white;
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-2xl */
-            border: 4px solid var(--primary-blue);
+            gap: 0.5rem;
         }
 
         .bingo-cell {
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            padding-top: 100%; /* Makes the cells perfectly square */
             position: relative;
-            padding-bottom: 100%; /* Makes the height equal to the width */
             cursor: pointer;
-            transition: transform 0.1s ease-in-out, background-color 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-            border-radius: 0.5rem; /* rounded-lg */
-            background-color: white;
-            color: #1f2937; /* text-gray-800 */
-            font-weight: 500; /* font-medium */
-            font-size: 0.875rem; /* text-sm */
-            border: 1px solid #e5e7eb; /* border-gray-200 */
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            border: 2px solid #3b82f6; /* Blue border */
+            background-color: #eff6ff; /* Blue light background */
+            text-align: center;
+            
+            font-size: 0.75rem; 
+            line-height: 1.2;
+            font-weight: 500;
+        }
+
+        .bingo-cell:hover:not(.marked) {
+            background-color: #dbeafe;
+        }
+
+        .marked {
+            background-color: #10b981; /* Green */
+            color: white;
+            transform: scale(1.05);
+            transition: background-color 0.3s, transform 0.3s;
+            border-color: #059669;
         }
         
+        .marked .cell-prompt {
+            color: #d1fae5; /* Light green for prompt text */
+            font-size: 0.65rem; 
+            margin-top: 0.25rem;
+        }
+        
+        .marked .cell-name {
+            font-weight: 700;
+            color: white;
+            font-size: 1rem;
+        }
+
+
         .cell-content {
             position: absolute;
             top: 0;
@@ -91,196 +83,72 @@
             width: 100%;
             height: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
-            text-align: center;
-            font-size: 0.8rem;
-            line-height: 1.2;
+            padding: 6px; 
         }
 
-        .bingo-cell:hover:not(.marked) {
-            transform: translateY(-2px);
-            background-color: #f0fdfa;
-        }
-
-        /* Marked State (Cell is selected) */
-        .marked {
-            background-color: var(--marked-green) !important;
-            color: white !important;
+        /* Styling for the FREE space */
+        .free-space {
+            background-color: #fcd34d; /* Amber */
+            color: #1f2937; /* Dark text */
+            cursor: default;
             transform: scale(1.05);
-            border: none;
-        }
-        .marked .cell-content {
-            text-decoration: line-through;
-            color: #d1fae5;
-        }
-
-        /* Free Space (Center Cell) */
-        .cursor-default { cursor: default; }
-
-        /* BUTTONS AND STATUS */
-        .button-container {
-            margin-top: 32px; /* mt-8 */
-            display: flex;
-            justify-content: center;
-            gap: 1rem; /* space-x-4 */
-        }
-
-        .status-message {
-            font-size: 1.125rem; /* text-lg */
-            color: #4b5563; /* text-gray-700 */
-            font-weight: 500;
-            align-self: center;
-            /* Status message is visible by default */
-        }
-        .status-message.hidden { /* Added specific class for hiding */
-            display: none !important;
-        }
-
-        .btn {
-            padding: 12px 24px; /* px-6 py-3 */
-            font-weight: 700; /* font-bold */
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-lg */
-            transition: all 0.3s ease-in-out;
-            transform-origin: center;
-            display: flex;
-            align-items: center;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-blue);
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: #1e40af; /* hover:bg-blue-700 */
-            transform: scale(1.05);
+            border-color: #d97706;
         }
         
-        .btn-accent {
-            background-color: var(--accent-teal);
-            color: white;
-        }
-        .btn-accent:hover {
-            background-color: #0d9488; /* hover:bg-teal-600 */
-            transform: scale(1.05);
-        }
-
-        .btn svg {
-            height: 1.25rem; /* h-5 */
-            width: 1.25rem; /* w-5 */
-            margin-right: 0.5rem; /* mr-2 */
-            display: inline-block;
-        }
-
-        /* MODAL STYLES */
-        #bingo-modal {
+        /* --- MODAL STYLES --- */
+        #input-modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(17, 24, 39, 0.85); /* bg-gray-900 bg-opacity-75 */
+            background-color: rgba(0, 0, 0, 0.7); 
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 50;
+            z-index: 60;
             transition: opacity 0.3s ease;
         }
-
-        #bingo-modal.hidden {
-            display: none;
-        }
-
-        #bingo-modal > div {
+        #input-modal.hidden { display: none; }
+        
+        #input-modal-content {
             background-color: white;
-            padding: 32px; /* p-8 */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
-            max-width: 448px; /* max-w-md */
-            width: 90%; /* w-11/12 */
+            padding: 2rem; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            max-width: 400px; 
+            width: 90%; 
             text-align: center;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
+        }
+        
+        .name-input-field {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 2px solid #3b82f6;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
 
-        #bingo-modal:not(.hidden) > div {
-            transform: scale(1);
-        }
-
-        #bingo-modal h2 {
-            font-size: 2.25rem; /* text-4xl */
-            font-weight: 800; /* font-extrabold */
-            color: var(--marked-green);
-            margin-bottom: 12px; /* mb-3 */
-        }
-        #bingo-modal p {
-            font-size: 1.25rem; /* text-xl */
-            color: #4b5563; /* text-gray-700 */
-            margin-bottom: 24px; /* mb-6 */
-        }
-        .animate-bounce {
-            animation: bounce 1s infinite;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-            50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
-            }
     </style>
-</head>
-<body>
-
-    <!-- Main Application Container -->
-    <div id="app">
-
-        <!-- Header -->
-        <header>
-            <h1>Networking Bingo</h1>
-            <p>Find a colleague for each square and mark it off!</p>
-        </header>
-
-        <!-- Game Board Container -->
-        <div id="bingo-board">
-            <!-- Cells will be inserted here by JavaScript -->
-        </div>
-
-        <!-- Status and Reset Button -->
-        <div class="button-container">
-            <!-- Initial 'hidden' class removed for debugging. The JS will hide this when the game loads successfully. -->
-            <p id="status-message" class="status-message">Loading game... If you see this for too long, try refreshing.</p>
-            <button id="reset-button" onclick="initializeBoard()" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0110.802 7.273l1.439 1.439a1 1 0 01-1.414 1.414l-1.439-1.439A9.002 9.002 0 005.001 3H4a1 1 0 010-2zm12 15a1 1 0 01-1 1h-2.101a7.002 7.002 0 01-10.802-7.273l-1.439-1.439a1 1 0 011.414-1.414l1.439 1.439A9.002 9.002 0 0014.999 17H16a1 1 0 010 2z" clip-rule="evenodd" />
-                </svg>
-                New Board / Reset
-            </button>
-            <!-- NEW DOWNLOAD BUTTON -->
-            <button id="download-button" onclick="downloadBoardFile()" class="btn btn-accent">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 12.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v9.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L9 12.586V3a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Download File
-            </button>
-        </div>
-    </div>
-
-    <!-- BINGO Modal (Hidden by Default) -->
-    <div id="bingo-modal" class="hidden">
-        <div>
-            <div class="text-6xl mb-4 animate-bounce">🎉</div>
-            <h2>BINGO!</h2>
-            <p>You've successfully connected and completed a line! Time to celebrate!</p>
-            <button onclick="hideBingoModal()" class="btn btn-accent">
-                Awesome! Continue Playing
-            </button>
-        </div>
-    </div>
-
-    <!-- JavaScript Game Logic -->
     <script>
-        // Global variables
+        // Global state
+        const GRID_SIZE = 5;
+        let boardState = []; // 1D array of objects: { prompt, name, element }
+        let isCelebrating = false;
+        let currentCellIndex = null;
+        
         const BINGO_PROMPTS = [
             "Has traveled to 3+ continents",
             "Works in a completely different industry",
@@ -294,7 +162,7 @@
             "Has lived in more than one state/country",
             "Is a self-proclaimed 'morning person'",
             "Has met a well-known celebrity/figure",
-            "FREE SPACE: Prefers working in an office", // Index 12 (center)
+            "FREE SPACE", // UPDATED: Removed the descriptive text
             "Is younger than 25 or older than 50",
             "Is a night owl (awake past midnight)",
             "Has a certification/degree in an unexpected field",
@@ -302,25 +170,15 @@
             "Has read a book this month",
             "Volunteers for a non-profit organization",
             "Has a favorite productivity hack to share",
-            "Has worked at their current company for less than a year",
-            "Has worked at their current company for 10+ years",
+            "Has worked at the ISO for less than a year", 
+            "Has worked at the ISO for 10+ years", 
             "Grew up in the city they currently live in",
             "Has successfully negotiated a major deal",
             "Has a unique hobby (e.g., pottery, lock-picking)"
         ];
 
-        let boardState = []; // Array to store the state (marked or not) of the 25 cells
-        const BOARD_SIZE = 5; // 5x5 grid
 
-        const boardElement = document.getElementById('bingo-board');
-        const modalElement = document.getElementById('bingo-modal');
-        const statusElement = document.getElementById('status-message');
-
-        /**
-         * Shuffles an array using the Fisher-Yates algorithm.
-         * @param {Array} array - The array to shuffle.
-         * @returns {Array} The shuffled array.
-         */
+        // Utility to shuffle an array (Fisher-Yates)
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -329,186 +187,285 @@
             return array;
         }
 
-        /**
-         * Initializes the game board with shuffled prompts and resets the state.
-         */
-        function initializeBoard() {
-            console.log("Initializing new board.");
-            boardState = new Array(BOARD_SIZE * BOARD_SIZE).fill(false);
-            boardElement.innerHTML = ''; // Clear existing board
-            
-            // Create a temporary array of non-free-space prompts
+        // Generates the initial randomized board data
+        function generateNewBoardData() {
             let gamePrompts = [...BINGO_PROMPTS];
-            const freeSpacePrompt = gamePrompts.splice(12, 1)[0];
+            // Find and remove the FREE SPACE prompt, which is now just "FREE SPACE"
+            const freeSpaceIndexInPrompts = gamePrompts.findIndex(p => p.startsWith("FREE SPACE"));
+            const freeSpacePrompt = gamePrompts.splice(freeSpaceIndexInPrompts, 1)[0];
             
-            // Shuffle the remaining 24 prompts
             shuffleArray(gamePrompts);
+            gamePrompts.splice(12, 0, freeSpacePrompt); // Insert free space back at index 12 (center)
 
-            // Re-insert the free space prompt at the center position (index 12)
-            gamePrompts.splice(12, 0, freeSpacePrompt);
+            const newBoard = gamePrompts.map((prompt, index) => ({
+                prompt: prompt,
+                name: index === 12 ? "FREE SPACE" : null, // Mark free space by default
+                element: null,
+                index: index
+            }));
+            
+            return newBoard;
+        }
 
-            // Render the board
-            gamePrompts.forEach((prompt, index) => {
-                const isFreeSpace = index === 12;
+        // Initializes the BINGO board UI and state
+        function initializeBoard() {
+            const gridContainer = document.getElementById('bingo-grid');
+            gridContainer.innerHTML = '';
+            isCelebrating = false;
+            document.getElementById('bingo-overlay').classList.add('hidden');
+            document.getElementById('reset-button').disabled = true;
 
-                // Mark the free space immediately
-                if (isFreeSpace) {
-                    boardState[index] = true;
-                    checkBingo();
-                }
+            boardState = generateNewBoardData();
+            
+            boardState.forEach(cellData => {
+                const index = cellData.index;
+                const isFree = index === 12;
+                const isMarked = !!cellData.name;
 
                 const cell = document.createElement('div');
-                cell.classList.add('bingo-cell');
-                cell.dataset.index = index;
+                cell.className = `bingo-cell rounded-lg shadow-md ${isFree ? 'free-space' : ''}`;
+                cell.setAttribute('data-index', index);
+                
+                if (isMarked) {
+                    cell.classList.add('marked');
+                }
+
                 cell.onclick = () => handleCellClick(index);
 
-                if (isFreeSpace) {
-                    cell.classList.add('marked', 'cursor-default');
-                    // Add inline style for specific free space glow
-                    cell.style.boxShadow = '0 0 10px rgba(20, 184, 166, 0.7)';
-                } else {
-                    // Normal cell setup is handled by the base .bingo-cell class
-                }
+                cellData.element = cell;
+                gridContainer.appendChild(cell);
+                
+                // Render initial content
+                updateCellDOM(index, cellData.name);
+            });
+            
+            document.getElementById('reset-button').disabled = false;
+        }
+        
+        /**
+         * Renders content based on state for a single cell.
+         * @param {number} index - The index of the cell.
+         * @param {string | null} name - The name of the person, or null if unmarked.
+         */
+        function updateCellDOM(index, name) {
+            const cellData = boardState[index];
+            const cellElement = cellData.element;
+            const isFree = index === 12;
+            
+            if (!cellElement) return;
 
-                cell.innerHTML = `
+            if (name && name !== 'FREE SPACE') {
+                // Marked state (Confirmed)
+                cellElement.classList.add('marked');
+                cellElement.innerHTML = `
                     <div class="cell-content">
-                        ${isFreeSpace ? `<span style="font-size:0.75rem; font-weight:700; display:block; margin-bottom: 4px;">FREE SPACE</span>${prompt}` : prompt}
+                        <span class="cell-name">${name}</span>
+                        <span class="cell-prompt text-xs italic">(${cellData.prompt})</span>
                     </div>
                 `;
-                boardElement.appendChild(cell);
-            });
-
-            // Ensure the modal is hidden
-            hideBingoModal();
-            statusElement.textContent = "Get 5 in a row!";
-            statusElement.classList.remove('status-message-bingo');
-            statusElement.classList.add('hidden');
-        }
-
-        /**
-         * Handles the click event on a bingo cell.
-         * @param {number} index - The index of the cell in the boardState array (0-24).
-         */
-        function handleCellClick(index) {
-            // Center Free Space (index 12) is non-clickable
-            if (index === 12) return;
-
-            const cellElement = boardElement.querySelector(`[data-index="${index}"]`);
-            
-            // Toggle the marked state
-            boardState[index] = !boardState[index];
-
-            // Update the cell's appearance
-            if (boardState[index]) {
-                cellElement.classList.add('marked');
+            } else if (isFree) {
+                // Free Space (Updated: Only shows 'FREE' text, perfectly centered)
+                cellElement.innerHTML = `
+                    <div class="cell-content">
+                        <span class="font-extrabold text-4xl leading-none">FREE</span>
+                    </div>
+                `;
             } else {
+                // Unmarked state
                 cellElement.classList.remove('marked');
+                cellElement.innerHTML = `<div class="cell-content">${cellData.prompt}</div>`;
             }
-
-            checkBingo();
         }
 
-        /**
-         * Checks the current board state for any winning condition (Bingo).
-         */
-        function checkBingo() {
-            const N = BOARD_SIZE;
-            const state = boardState;
+
+        // Handles cell click event
+        function handleCellClick(index) {
+            if (index === 12) return; // Ignore free space clicks
+            currentCellIndex = index;
+
+            const cellData = boardState[index];
+            const isMarked = !!cellData.name;
+            
+            document.getElementById('input-prompt-text').textContent = `Prompt: ${cellData.prompt}`;
+            
+            const nameInput = document.getElementById('person-name-input');
+            nameInput.value = isMarked ? cellData.name : '';
+
+            // Set up modal buttons and title based on state
+            document.getElementById('input-modal-title').textContent = isMarked ? "Edit Confirmed Name" : "Who confirmed this space?";
+            document.getElementById('mark-button').textContent = isMarked ? "Update Name" : "Mark Space";
+            document.getElementById('unmark-button').classList.toggle('hidden', !isMarked);
+            
+            showInputModal();
+            nameInput.focus();
+        }
+        
+        function showInputModal() {
+            document.getElementById('input-modal').classList.remove('hidden');
+        }
+
+        function hideInputModal() {
+            document.getElementById('input-modal').classList.add('hidden');
+            currentCellIndex = null;
+        }
+        
+        function markCellWithName() {
+            if (currentCellIndex === null) return;
+            
+            const nameInput = document.getElementById('person-name-input');
+            const name = nameInput.value.trim();
+            
+            if (name === "") {
+                nameInput.style.border = '2px solid #ef4444'; 
+                return;
+            }
+            nameInput.style.border = '2px solid #3b82f6'; // Reset border
+
+            boardState[currentCellIndex].name = name;
+            updateCellDOM(currentCellIndex, name);
+            hideInputModal();
+            checkBingo(true);
+        }
+
+        function unmarkCell() {
+            if (currentCellIndex === null || currentCellIndex === 12) return;
+
+            boardState[currentCellIndex].name = null;
+            updateCellDOM(currentCellIndex, null);
+            hideInputModal();
+            checkBingo(false);
+        }
+
+        // Check all rows, columns, and diagonals for a BINGO
+        function checkBingo(showModal) {
+            const N = GRID_SIZE;
             let bingoFound = false;
 
-            // 1. Check Rows
+            // Check Rows, Columns, and Diagonals
+            const isMarked = (r, c) => !!boardState[r * N + c].name;
+            
+            // 1. Check Rows and Columns
             for (let i = 0; i < N; i++) {
-                let rowComplete = true;
+                let rowBingo = true;
+                let colBingo = true;
                 for (let j = 0; j < N; j++) {
-                    if (!state[i * N + j]) {
-                        rowComplete = false;
-                        break;
-                    }
+                    if (!isMarked(i, j)) rowBingo = false;
+                    if (!isMarked(j, i)) colBingo = false;
                 }
-                if (rowComplete) bingoFound = true;
+                if (rowBingo || colBingo) bingoFound = true;
             }
 
-            // 2. Check Columns
-            for (let j = 0; j < N; j++) {
-                let colComplete = true;
-                for (let i = 0; i < N; i++) {
-                    if (!state[i * N + j]) {
-                        colComplete = false;
-                        break;
-                    }
-                }
-                if (colComplete) bingoFound = true;
-            }
-
-            // 3. Check Diagonals
-            // Diagonal 1 (Top-Left to Bottom-Right)
-            let diag1Complete = true;
+            // 2. Check Diagonals
+            let diag1Bingo = true; // Top-left to bottom-right (i, i)
+            let diag2Bingo = true; // Top-right to bottom-left (i, N-1-i)
             for (let i = 0; i < N; i++) {
-                if (!state[i * N + i]) {
-                    diag1Complete = false;
-                    break;
+                if (!isMarked(i, i)) diag1Bingo = false;
+                if (!isMarked(i, N - 1 - i)) diag2Bingo = false;
+            }
+
+            if (diag1Bingo || diag2Bingo) bingoFound = true;
+            
+            if (bingoFound && showModal) {
+                startCelebration();
+            }
+            return bingoFound;
+        }
+
+        // Start the visual celebration
+        function startCelebration() {
+            if (isCelebrating) return;
+            isCelebrating = true;
+
+            const overlay = document.getElementById('bingo-overlay');
+            overlay.classList.remove('hidden');
+
+            // Play a celebratory sound effect using Tone.js
+            try {
+                // Ensure Tone is initialized
+                if (Tone.context.state !== 'running') {
+                    Tone.context.resume();
                 }
+                const synth = new Tone.MembraneSynth().toDestination();
+                synth.triggerAttackRelease('C4', '8n');
+                setTimeout(() => synth.triggerAttackRelease('E4', '8n'), 150);
+                setTimeout(() => synth.triggerAttackRelease('G4', '4n'), 300);
+            } catch (e) {
+                console.warn("Tone.js sound failed. Is the library loaded?", e);
             }
-            if (diag1Complete) bingoFound = true;
 
-            // Diagonal 2 (Top-Right to Bottom-Left)
-            let diag2Complete = true;
-            for (let i = 0; i < N; i++) {
-                if (!state[i * N + (N - 1 - i)]) {
-                    diag2Complete = false;
-                    break;
-                }
-            }
-            if (diag2Complete) bingoFound = true;
-
-            if (bingoFound) {
-                showBingoModal();
-            }
+            // The animation runs infinitely, but we only let the overlay show for a duration
+            setTimeout(() => {
+                isCelebrating = false;
+                overlay.classList.add('hidden');
+            }, 8000); // Celebration runs for 8 seconds
         }
 
-        /**
-         * Displays the Bingo success modal.
-         */
-        function showBingoModal() {
-            modalElement.classList.remove('hidden');
-            statusElement.textContent = "BINGO! You did it!";
-            statusElement.classList.add('status-message-bingo');
-        }
+        // Setup on window load
+        window.onload = function() {
+            // Load Tone.js for sound effects
+            const toneScript = document.createElement('script');
+            toneScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js';
+            document.head.appendChild(toneScript);
 
-        /**
-         * Hides the Bingo success modal.
-         */
-        function hideBingoModal() {
-            modalElement.classList.add('hidden');
-        }
+            document.getElementById('reset-button').addEventListener('click', initializeBoard);
+            document.getElementById('mark-button').addEventListener('click', markCellWithName);
+            document.getElementById('unmark-button').addEventListener('click', unmarkCell);
+            document.getElementById('cancel-button').addEventListener('click', hideInputModal);
 
-        /**
-         * Triggers a download of the current HTML source code.
-         */
-        function downloadBoardFile() {
-            // Get the entire HTML content of the current document (including DTD)
-            const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-            
-            // Create a Blob containing the HTML content
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            
-            // Create a temporary link element
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'networking_bingo_standalone.html'; // Suggested file name
-            
-            // Append link to body, click it, and remove it
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            // Revoke the temporary object URL to free up memory
-            URL.revokeObjectURL(a.href);
-        }
 
-        // Initialize the board when the page loads
-        document.addEventListener('DOMContentLoaded', initializeBoard);
+            initializeBoard();
+        };
 
     </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Celebration Overlay (Hidden by default) -->
+    <div id="bingo-overlay" class="hidden fixed inset-0 overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-9xl font-extrabold whitespace-nowrap text-red-500 bingo-celebration">
+            BINGO!!! BINGO!!! BINGO!!!
+        </div>
+    </div>
+    
+    <!-- Input Modal -->
+    <div id="input-modal" class="hidden">
+        <div id="input-modal-content" class="rounded-xl">
+            <h2 id="input-modal-title" class="text-xl font-bold mb-4 text-blue-700">Who confirmed this space?</h2>
+            <p id="input-prompt-text" class="text-sm font-normal text-gray-600 mb-4"></p>
+            <input type="text" id="person-name-input" placeholder="Enter name here" class="name-input-field">
+            <div class="modal-buttons">
+                <button id="mark-button" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 transform hover:scale-105">
+                    Mark Space
+                </button>
+                <button id="cancel-button" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition duration-150 transform hover:scale-105">
+                    Cancel
+                </button>
+            </div>
+             <button id="unmark-button" class="hidden w-full mt-4 px-4 py-2 bg-red-400 text-red-900 font-semibold rounded-lg shadow-md hover:bg-red-500 transition duration-150 transform hover:scale-105 text-sm">
+                Remove Mark
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Main Game Card -->
+    <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl max-w-lg w-full">
+        <h1 class="text-4xl font-bold text-center mb-6 text-blue-700">Networking BINGO</h1>
+        <p class="text-center mb-6 text-sm text-gray-500">Click a square to enter the person's name who matches the prompt.</p>
+        
+        <!-- BINGO Grid -->
+        <div id="bingo-grid" class="grid bingo-grid aspect-square">
+            <!-- Cells generated by JavaScript -->
+        </div>
+
+        <!-- Controls -->
+        <div class="mt-8 flex justify-center">
+            <button id="reset-button" class="px-6 py-3 bg-red-500 text-white font-semibold rounded-full shadow-lg hover:bg-red-600 transition duration-150 transform hover:scale-105" disabled>
+                Reset Board
+            </button>
+        </div>
+    </div>
+
 </body>
 </html>
